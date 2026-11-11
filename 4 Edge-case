@@ -1,0 +1,81 @@
+module dma_controller (
+    // ==========================================
+    // 1. Tín hiệu Hệ thống (System Signals)
+    // ==========================================
+    input  wire        clk,      // Xung nhịp hệ thống
+    input  wire        rst_n,    // Reset tích cực mức thấp (Active low)
+    // ==========================================
+    // 2. Giao tiếp với CPU (Slave Interface)
+    // CPU dùng các chân này để ghi/đọc thanh ghi cấu hình của DMA
+    // ==========================================
+    input  wire [3:0]  cpu_addr,    // Địa chỉ thanh ghi DMA cần cấu hình
+    input  wire        cpu_wr_en,   // Tín hiệu cho phép CPU ghi
+    input  wire        cpu_rd_en,   // Tín hiệu cho phép CPU đọc
+    input  wire [31:0] cpu_wr_data, // Dữ liệu CPU ghi vào thanh ghi DMA
+    output wire [31:0] cpu_rd_data, // Dữ liệu DMA trả về cho CPU đọc
+    output wire        intr,        // Ngắt (Interrupt) báo cho CPU khi truyền xong hoặc có lỗi
+    // ==========================================
+    // 3. Giao tiếp với Bộ nhớ/RAM (Master Interface)
+    // DMA dùng các chân này để chiếm quyền bus, đọc/ghi dữ liệu RAM
+    // ==========================================
+    output wire        bus_req,     // DMA xin quyền điều khiển Bus từ Bus Arbiter/CPU
+    input  wire        bus_grant,   // CPU đồng ý nhường Bus cho DMA
+    
+    output wire [31:0] mem_addr,    // Địa chỉ RAM mà DMA muốn đọc/ghi
+    output wire        mem_wr_en,   // DMA ra lệnh ghi vào RAM
+    output wire        mem_rd_en,   // DMA ra lệnh đọc từ RAM
+    output wire [31:0] mem_wr_data, // Dữ liệu DMA ghi vào RAM
+    input  wire [31:0] mem_rd_data, // Dữ liệu DMA đọc được từ RAM
+    input  wire        mem_ready,   // RAM báo đã sẵn sàng/hoàn thành đọc ghi (nếu RAM trễ)
+    // ==========================================
+    // 4. Giao tiếp với Thiết bị ngoại vi (Peripheral Interface)
+    // ==========================================
+    input  wire        dreq,        // DREQ (DMA Request): Ngoại vi yêu cầu truyền dữ liệu
+    output wire        dack         // DACK (DMA Acknowledge): DMA xác nhận bắt đầu phục vụ ngoại vi
+);
+
+    // =========================================================================
+    // KHAI BÁO TÍN HIỆU NỘI BỘ (Internal Signals)
+    // =========================================================================
+    // Lưu ý cho Nhóm RTL: Các bạn khai báo thêm thanh ghi (reg) bên trong module, 
+    // sau đó dùng lệnh 'assign' để nối giá trị từ thanh ghi nội bộ ra các cổng 'output wire'.
+
+    reg [31:0] reg_cpu_rd_data;
+    reg        reg_intr;
+    reg        reg_bus_req;
+    reg [31:0] reg_mem_addr;
+    reg        reg_mem_wr_en;
+    reg        reg_mem_rd_en;
+    reg [31:0] reg_mem_wr_data;
+    reg        reg_dack;
+
+    // Gán (Assign) các tín hiệu nội bộ ra cổng output
+    assign cpu_rd_data = reg_cpu_rd_data;
+    assign intr        = reg_intr;
+    assign bus_req     = reg_bus_req;
+    assign mem_addr    = reg_mem_addr;
+    assign mem_wr_en   = reg_mem_wr_en;
+    assign mem_rd_en   = reg_mem_rd_en;
+    assign mem_wr_data = reg_mem_wr_data;
+    assign dack        = reg_dack;
+
+    // =========================================================================
+    // KHỐI LOGIC THIẾT KẾ (Dành cho TV1, TV2, TV3)
+    // =========================================================================
+    // Mẫu: Gán giá trị mặc định tránh Latch khi khởi động
+    always @(*) begin
+        // Giá trị mặc định (Ví dụ)
+        reg_cpu_rd_data = 32'd0;
+        reg_intr        = 1'b0;
+        reg_bus_req     = 1'b0;
+        reg_mem_addr    = 32'd0;
+        reg_mem_wr_en   = 1'b0;
+        reg_mem_rd_en   = 1'b0;
+        reg_mem_wr_data = 32'd0;
+        reg_dack        = 1'b0;
+
+        // Bổ sung Logic điều khiển FSM, Register File, Data Path của các bạn vào đây
+        // ...
+    end
+
+endmodule
